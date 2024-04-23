@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bakpao Gacor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body>
+    <div class="flex justify-center justify-items-center pt-5">
+      <div class="w-3/4">
+        <div class="flex justify-center p-3">
+          <h1 class="font-bold">Hello guests</h1>
+          
+        </div>
+        <div>
+          Total Order
+          {% for key, value in total.items()%}
+          <div>
+            {{ key }} : {{ value }}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="relative rounded-xl overflow-auto">
+          <div class="shadow-sm overflow-hidden my-8">
+            <table class="border-collapse table-auto w-full text-sm">
+              <thead>
+                <tr>
+                  <th
+                    class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left"
+                  >
+                    Initial
+                  </th>
+                  {% for bapao in bakpaos %}
+                  <th
+                  class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left"
+                >
+                  {{ bapao[1] }}
+                </th>
+                
+                  {% endfor %}
+                  <th
+                    class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left"
+                  >
+                    Total
+                  </th>
+                  {% if session.get('logged_in') == true %}
+                  <th
+                    class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left"
+                  >
+                    Paid
+                  </th>
+                  {% endif %}
+                </tr>
+              </thead>
+              <tbody
+                class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left"
+              >
+                {% for order_id, order in orders.items() %}
+                <tr id={{ order_id }} 
+                class={% if order["is_paid"] == true%}bg-green-300{% else %}bg-red-300{% endif %}>
+                  <td
+                    class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-200"
+                  >
+                    {{ order["initial"] }}
+                  </td>
+                  {% for bakpao in bakpaos %}
+                  
+                  {% set vars = {'found':False} %}
+                  
+                  {% for order_details in order["transactions"]%}
+                    
+                      {%if order_details["bakpao_id"] == bakpao[0]%}
+                        {% if vars.update({'found':True}) %}
+                        {% endif %}
+                        <td
+                          class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400"
+                        >
+                          {{ order_details["quantity"] }}
+                        </td>
+                      {% endif %}
+                    {% endfor %}
+                    {% if not vars.found%}
+                      <td
+                          class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400"
+                        >
+                          0
+                        </td>
+                    {% endif %}
+                  {% endfor %}
+                  <td
+                    class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400"
+                  >
+                    Rp. {{ order["total"] }}
+                      </td>
+                      {%if session.get("logged_in") == True%}
+                      <td
+                      class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400"
+                    >
+                      <input id="pay{{ order_id }}"  type="button" class="outline outline-gray-300 p-1 cursor-pointer rounded-md bg-white" value="{% if order["is_paid"] == false %}Pay !{% else %}Not paid{% endif %}"/>
+                      <script>document.getElementById('pay{{ order_id }}').addEventListener('click', (e)=>{
+                        patchIsPaid("{{ order_id }}", !{{ order["is_paid"] }})  
+                      })</script>
+                    </td>
+                  {% endif %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {%if session.get("logged_in") == true%}
+          <div class="flex">
+            <div class="p-2 w-1/2">
+              <input
+                name="initial"
+                class="p-2 outline outline-gray-300 rounded-md mr-4"
+                placeholder="Initial"
+                id="initial"
+              />
+              <div id="list_order">
+
+              </div>
+            </div>
+            <div>
+              <select id="bakpao_selection" class="outline outline-gray-300 rounded-md p-2">
+                {% for bakpao in bakpaos %}
+                  <option value={{ bakpao[0] }}>{{ bakpao[1] }}</option>
+                {% endfor %}
+              </select>
+            <button
+              id="order"
+              class="mt-4 bg-blue-300 rounded-md p-2 font-medium text-white"
+            >
+              Create Order
+            </button>
+            <div id="inputQty" class="mt-4"></div>
+            </div>
+            
+        {% endif %}
+      </div>
+    </div>
+  </body>
+  <script>
+    {% if session.get("logged_in") == true%}
+    const divInputQty = document.getElementById("inputQty")
+    const listOrder = document.getElementById("list_order")
+    const selection = document.getElementById("bakpao_selection")
+    let orderJson = []
+    var inputQty = null
+
+    const patchIsPaid = (transaction_id, status)=>{
+      const URL = "http://localhost:5000/order"
+      fetch(URL, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({"transaction_id": transaction_id, "status":status})
+      }).then(response=>{
+        if(!response.ok){
+          throw new Error('Network response was not ok');
+        }
+        console.log(response.json())
+        window.location.reload()
+      })
+    }
+
+    document.getElementById("order").addEventListener("click", (e) => {
+      
+
+      orderReq = {"initial" : document.getElementById("initial").value, "items" : orderJson}
+      console.log(orderReq)
+      const url = "http://localhost:5000/order";
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(orderReq)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        
+        console.log(response.json());
+        window.location.reload()
+      })
+      .then(data => {
+        console.log(data);
+      })
+      .catch(error => {
+        // Handle errors
+        console.error('There was a problem with your fetch operation:', error);
+      });
+      
+    });
+    
+
+    const updateOrder = ()=>{
+      listOrder.innerHTML = orderJson.map((item)=>{
+        return(
+          `<div>${item.bakpao_id} : ${item.qty}</div>`
+        )
+      })
+    }
+
+    selection.addEventListener("change", (e)=>{
+      divInputQty.innerHTML = `<input class='outline p-2 outline-gray-300 rounded-md' type='number' id='${e.target.value}Qty'/>`
+      const item_id = e.target.value
+      inputQty = document.getElementById(`${e.target.value}Qty`).addEventListener("change",(e)=>{
+        const item_qty = e.target.value
+        const exists = orderJson.some((item)=>item.bakpao_id === item_id)
+        if(exists){
+          orderJson = orderJson.map((item)=>item.bakpao_id === item_id ? {...item, qty:item_qty} : item)
+        }else{
+          orderJson.push({"bakpao_id":item_id, "qty" : item_qty})
+        
+        }
+        console.log(orderJson)
+        updateOrder()
+      })
+
+    })
+
+
+
+  </script>
+  {% endif %}
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bakpao Gacor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body>
+    <div class="flex justify-center justify-items-center pt-5">
+      <div class="w-1/2">
+        <div class="flex justify-center p-3">
+          <h1 class="font-bold">Price List</h1>
+        </div>
+        <div>
+          <div class="relative rounded-xl overflow-auto">
+            <div class="shadow-sm overflow-hidden my-8">
+              <table class="border-collapse table-auto w-full text-sm">
+                <thead>
+                  <tr>
+                    <th
+                      class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left"
+                    >
+                      Name
+                    </th>
+                    <th
+                      class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left"
+                    >
+                      Price
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left"
+                >
+                  {% for bakpao in bakpaos %}
+                  <tr>
+                    <td
+                      class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400"
+                    >
+                      {{ bakpao[1] }}
+                    </td>
+                    <td
+                      class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400"
+                    >
+                      Rp {{ bakpao[2] }}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {%if session.get("logged_in") == true%}
+        <form method="POST" action="/bakpao" class="flex flex-col">
+          <input
+            name="bakpao_name"
+            class="p-2 outline outline-gray-300 rounded-md"
+            placeholder="Bakpao name"
+          />
+          <input
+            name="bakpao_price"
+            class="p-2 mt-4 outline outline-gray-300 rounded-md"
+            placeholder="Bakpao Price"
+          />
+          <button
+            class="mt-4 bg-blue-300 rounded-md p-2 font-medium text-white"
+          >
+            Create Bakpao
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </body>
+</html>

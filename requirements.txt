@@ -1,0 +1,4 @@
+flask==3.0.2
+Flask-MySQLdb==2.0.0
+python-dotenv==0.16.0
+uuid==1.30
