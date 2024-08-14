@@ -21,6 +21,26 @@
             {{ key }} : {{ value }}
           </div>
           {% endfor %}
+
+          {% if session.get('logged_in') == true %}
+            <script>
+
+              const getUnpaidList = ()=>{
+                var unpaidList = document.getElementsByClassName("bg-red-300")
+                let resultUnpaidList = ""
+                for(unpaid of unpaidList){
+                  const currInitial = unpaid.children[0].textContent.trim()
+                  const notPaidCurrency = unpaid.children[unpaid.children.length - 2].textContent.trim()
+                  resultUnpaidList += currInitial + " " + notPaidCurrency + "\n"
+                }
+                navigator.clipboard.writeText(resultUnpaidList)
+                alert("Unpaid list copy to your clipboard")
+              }
+              
+            </script>
+
+            <button onclick=getUnpaidList()>Get Unpaid to Clipboard</button>
+          {% endif %}
         </div>
         <div class="relative rounded-xl overflow-auto">
           <div class="shadow-sm overflow-hidden my-8">
